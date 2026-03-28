@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Optimizer — Login</title>
+  <script>if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');</script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent: #7c6af7;
+      --accent-glow: rgba(124,106,247,0.2);
+      --surface: rgba(10,10,20,0.75);
+      --border: rgba(255,255,255,0.08);
+      --border-bright: rgba(255,255,255,0.15);
+      --text: #e2e8f0;
+      --muted: #4a5568;
+      --muted-bright: #94a3b8;
+      --danger: #fc8181;
+      --green: #4ade80;
+      --mono: 'JetBrains Mono', monospace;
+      --serif: 'DM Serif Display', serif;
+    }
+
+    body {
+      font-family: var(--mono);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: #000;
+    }
+
+    /* WebGL canvas fills background */
+    #nebula-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    /* Scanline overlay */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+    }
+
+    .brand { text-align: center; margin-bottom: 32px; }
+    .brand-logo { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .logo-bracket { font-size: 26px; font-weight: 300; color: var(--accent); line-height: 1; }
+    .logo-text { font-family: var(--serif); font-size: 20px; color: #fff; letter-spacing: -0.3px; }
+    .brand-sub { font-size: 10px; color: var(--muted-bright); letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.7; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+
+    .terminal-bar {
+      background: rgba(255,255,255,0.04);
+      padding: 10px 16px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-r { background: #ff5f57; }
+    .dot-y { background: #febc2e; }
+    .dot-g { background: #28c840; }
+    .terminal-title { font-size: 11px; color: var(--muted-bright); margin-left: 6px; letter-spacing: 0.05em; }
+
+    .form-body { padding: 28px 28px 32px; }
+
+    .prompt-line { display: flex; align-items: center; gap: 8px; margin-bottom: 24px; }
+    .prompt-symbol { color: var(--green); font-size: 13px; }
+    .prompt-cmd { font-size: 13px; color: var(--muted-bright); }
+    .prompt-arg { color: var(--accent); }
+    .cursor-blink {
+      display: inline-block; width: 8px; height: 14px;
+      background: var(--accent);
+      animation: blink 1s step-end infinite;
+      vertical-align: middle; margin-left: 2px; opacity: 0.8;
+    }
+    @keyframes blink { 0%,100%{opacity:0.8;} 50%{opacity:0;} }
+
+    .field { margin-bottom: 18px; }
+    .field label { display: block; font-size: 11px; color: var(--muted-bright); margin-bottom: 7px; letter-spacing: 0.08em; }
+    .field label .comment { color: var(--muted); }
+    .field label .key { color: var(--accent); }
+    .field input {
+      width: 100%; font-family: var(--mono); font-size: 13px;
+      color: var(--text);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-bright);
+      border-radius: 3px; padding: 11px 14px; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      letter-spacing: 0.02em;
+    }
+    .field input::placeholder { color: var(--muted); }
+    .field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+      background: rgba(124,106,247,0.07);
+    }
+
+    .error {
+      font-size: 12px; color: var(--danger);
+      background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.25);
+      border-radius: 3px; padding: 9px 13px; margin-bottom: 18px;
+    }
+    .error::before { content: '// '; color: var(--muted); }
+
+    .btn {
+      width: 100%; font-family: var(--mono); font-size: 13px; font-weight: 500;
+      color: #0a0a14; background: var(--accent);
+      border: none; border-radius: 3px; padding: 13px;
+      cursor: pointer; letter-spacing: 0.06em;
+      transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+      margin-top: 6px;
+    }
+    .btn:hover { background: #9580ff; box-shadow: 0 0 24px var(--accent-glow); transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 16px 28px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .footer-text { font-size: 11px; color: var(--muted-bright); opacity: 0.7; }
+    .footer a { font-size: 12px; color: var(--accent); text-decoration: none; letter-spacing: 0.03em; }
+    .footer a:hover { color: #9580ff; }
+  </style>
+</head>
+<body>
+
+<canvas id="nebula-canvas"></canvas>
+
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-logo">
+      <span class="logo-bracket">{</span>
+      <span class="logo-text">GetItDone</span>
+      <span class="logo-bracket">}</span>
+    </div>
+    <div class="brand-sub"> personal study system</div>
+  </div>
+
+  <div class="card">
+    <div class="terminal-bar">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
+      <span class="terminal-title">auth.py &mdash; login</span>
+    </div>
+
+    <div class="form-body">
+      <div class="prompt-line">
+        <span class="prompt-symbol">&#8594;</span>
+        <span class="prompt-cmd">python <span class="prompt-arg">login.py</span></span>
+        <span class="cursor-blink"></span>
+      </div>
+
+      {% if error %}
+        <div class="error">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST" action="/login">
+        <div class="field">
+          <label><span class="comment"># </span><span class="key">username</span></label>
+          <input type="text" name="username" placeholder="enter username" required autocomplete="username">
+        </div>
+        <div class="field">
+          <label><span class="comment"># </span><span class="key">password</span></label>
+          <input type="password" name="password" placeholder="enter password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn">$ ./login --execute</button>
+      </form>
+    </div>
+
+    <div class="footer">
+      <span class="footer-text">no account?</span>
+      <a href="/signup">signup.py &rarr;</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const canvas = document.getElementById('nebula-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+  const vertexShader = `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `;
+
+  const fragmentShader = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform vec2 u_resolution;
+    uniform float u_time;
+    uniform vec2 u_mouse;
+
+    vec3 hsl2rgb(vec3 c) {
+      vec3 rgb = clamp(abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0,0.0,1.0);
+      return c.z * mix(vec3(1.0), rgb, c.y);
+    }
+
+    float random(vec2 st) {
+      return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+    }
+
+    float noise(vec2 st) {
+      vec2 i = floor(st);
+      vec2 f = fract(st);
+      float a = random(i);
+      float b = random(i + vec2(1.0, 0.0));
+      float c = random(i + vec2(0.0, 1.0));
+      float d = random(i + vec2(1.0, 1.0));
+      vec2 u = f * f * (3.0 - 2.0 * f);
+      return mix(a, b, u.x) + (c - a)*u.y*(1.0 - u.x) + (d - b)*u.y*u.x;
+    }
+
+    float fbm(vec2 st) {
+      float value = 0.0;
+      float amplitude = 0.5;
+      for (int i = 0; i < 6; i++) {
+        value += amplitude * noise(st);
+        st *= 2.0;
+        amplitude *= 0.5;
+      }
+      return value;
+    }
+
+    void main() {
+      vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.y, u_resolution.x);
+      uv *= 1.5;
+      vec2 mouse_n = u_mouse / u_resolution;
+      uv += (mouse_n - 0.5) * 0.4;
+
+      float f = fbm(uv + vec2(u_time * 0.1, u_time * 0.05));
+      float t = fbm(uv + f + vec2(u_time * 0.05, u_time * 0.02));
+
+      float nebula = pow(t, 2.0);
+      /* hue around 250 — blue/purple */
+      vec3 color = hsl2rgb(vec3(0.69 + nebula * 0.15, 0.75, 0.45));
+      color *= nebula * 2.8;
+
+      /* stars */
+      float sv = random(vUv * 600.0);
+      if (sv > 0.998) {
+        color += vec3((sv - 0.998) / 0.002 * 3.0);
+      }
+
+      gl_FragColor = vec4(color, 1.0);
+    }
+  `;
+
+  const material = new THREE.ShaderMaterial({
+    vertexShader,
+    fragmentShader,
+    uniforms: {
+      u_time:       { value: 0.0 },
+      u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+      u_mouse:      { value: new THREE.Vector2(window.innerWidth / 2, window.innerHeight / 2) },
+    }
+  });
+
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
+  scene.add(mesh);
+
+  window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    material.uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    material.uniforms.u_mouse.value.set(e.clientX, window.innerHeight - e.clientY);
+  });
+
+  (function animate() {
+    material.uniforms.u_time.value += 0.004;
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+  })();
+})();
+</script>
+</body>
+</html>

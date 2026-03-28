@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Optimizer — Tasks</title>
+  <script>document.documentElement.setAttribute('data-theme', 'dark');</script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f4f1ec; --surface: #ffffff; --accent: #6a2d59;
+      --accent-light: #f3e8f0; --accent-dark: #431b41;
+      --text: #1a1a1a; --muted: #6b7280; --border: #e5e0d8;
+      --danger: #dc2626; --danger-bg: #fef2f2;
+      --warn: #d97706; --warn-bg: #fffbeb;
+      --success: #16a34a; --success-bg: #f0fdf4;
+      --info: #2563eb; --info-bg: #eff6ff;
+      --serif: 'DM Serif Display', Georgia, serif;
+      --sans: 'DM Sans', sans-serif;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0f1117; --surface: #161b22; --border: #30363d;
+      --text: #e6edf3; --muted: #8b949e;
+      --accent-light: #2d1f3d; --accent-dark: #c084fc;
+      --danger-bg: #2d1515; --warn-bg: #2d1f0a;
+      --success-bg: #0d2018; --info-bg: #0d1a2d;
+    }
+
+    body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+    nav { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; height: 60px; }
+    .nav-brand { font-family: var(--serif); font-size: 20px; color: var(--accent-dark); text-decoration: none; }
+    .nav-links { display: flex; gap: 4px; align-items: center; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: var(--muted); text-decoration: none; padding: 6px 16px; border-radius: 8px; transition: background 0.15s, color 0.15s; }
+    .nav-links a:hover { background: var(--bg); color: var(--text); }
+    .nav-links a.active { background: var(--accent-light); color: var(--accent-dark); }
+    .nav-links a.danger { color: var(--danger); }
+    .theme-btn { font-family: var(--sans); font-size: 13px; font-weight: 500; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 8px; padding: 5px 14px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+    .theme-btn:hover { color: var(--text); border-color: var(--accent); }
+
+    .greeting-bar { background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent) 100%); color: #fff; padding: 24px 32px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+    .greeting-text h2 { font-family: var(--serif); font-size: 26px; font-weight: 400; margin-bottom: 4px; }
+    .greeting-text p { font-size: 13px; opacity: 0.75; }
+    .plan-btn { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; font-family: var(--sans); font-size: 14px; font-weight: 500; padding: 10px 20px; border-radius: 10px; text-decoration: none; }
+    .plan-btn:hover { background: rgba(255,255,255,0.25); }
+
+    .focus-strip { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; align-items: center; gap: 32px; flex-wrap: wrap; }
+    .focus-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+    .focus-stat { font-size: 22px; font-family: var(--serif); color: var(--accent-dark); line-height: 1; }
+    .focus-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .focus-divider { width: 1px; height: 40px; background: var(--border); }
+
+    .page { max-width: 920px; margin: 0 auto; padding: 32px 24px 80px; display: grid; grid-template-columns: 300px 1fr; gap: 28px; align-items: start; }
+    .sidebar { position: sticky; top: 24px; display: flex; flex-direction: column; gap: 16px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+    .card-title { font-family: var(--serif); font-size: 20px; color: var(--accent-dark); margin-bottom: 18px; }
+
+    .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    .field label { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+    .field input, .field select { font-family: var(--sans); font-size: 14px; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; outline: none; width: 100%; transition: border-color 0.15s, box-shadow 0.15s; }
+    .field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(106,45,89,0.1); }
+    .field input::placeholder { color: var(--muted); }
+
+    .btn-primary { display: flex; align-items: center; justify-content: center; background: var(--accent); color: #fff; font-family: var(--sans); font-size: 14px; font-weight: 500; border: none; border-radius: 9px; padding: 11px 20px; cursor: pointer; width: 100%; margin-top: 4px; transition: background 0.15s, transform 0.1s; }
+    .btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px); }
+    .btn-danger { display: flex; align-items: center; justify-content: center; background: transparent; color: var(--danger); font-family: var(--sans); font-size: 13px; font-weight: 500; border: 1px solid #fca5a5; border-radius: 9px; padding: 8px 16px; cursor: pointer; margin-top: 10px; width: 100%; transition: background 0.15s; }
+    .btn-danger:hover { background: var(--danger-bg); }
+
+    .plan-preview { background: var(--accent-light); border: 1px solid rgba(106,45,89,0.15); border-radius: 12px; padding: 16px; }
+    .plan-preview-title { font-size: 12px; font-weight: 600; color: var(--accent-dark); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+    .plan-item { font-size: 13px; color: var(--accent-dark); padding: 5px 0; border-bottom: 1px solid rgba(106,45,89,0.1); display: flex; gap: 8px; align-items: center; }
+    .plan-item:last-child { border-bottom: none; }
+    .plan-done-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+    .plan-todo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); flex-shrink: 0; }
+
+    .tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+    .tab-btn { font-family: var(--sans); font-size: 13px; font-weight: 500; border: 1px solid var(--border); background: var(--surface); color: var(--muted); border-radius: 8px; padding: 7px 16px; cursor: pointer; transition: all 0.15s; }
+    .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .empty { text-align: center; padding: 40px 24px; border: 1.5px dashed var(--border); border-radius: 14px; color: var(--muted); }
+    .empty p { font-size: 14px; line-height: 1.6; }
+
+    .task-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; margin-bottom: 12px; transition: box-shadow 0.15s; }
+    .task-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .task-card.complete { border-left: 4px solid var(--accent); opacity: 0.85; }
+    .task-card.pending { border-left: 4px solid var(--warn); }
+
+    .task-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .task-name { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.3; }
+    .badge-high   { background: #fef2f2; color: #dc2626; }
+    .badge-medium { background: #fffbeb; color: #d97706; }
+    .badge-low    { background: #f0fdf4; color: #16a34a; }
+    [data-theme="dark"] .badge-high   { background: #2d1515; color: #fc8181; }
+    [data-theme="dark"] .badge-medium { background: #2d1f0a; color: #fbbf24; }
+    [data-theme="dark"] .badge-low    { background: #0d2018; color: #4ade80; }
+    .recurring-tag { font-size: 10px; color: var(--muted); background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 2px 8px; margin-left: 6px; }
+    .badge-done { background: var(--accent-light); color: var(--accent-dark); }
+    .badge-pending { background: var(--warn-bg); color: var(--warn); }
+    .badge-high    { background: #fef2f2; color: #dc2626; }
+    .badge-medium  { background: #fffbeb; color: #d97706; }
+    .badge-low     { background: #f0fdf4; color: #16a34a; }
+    .badge-recurring { background: var(--accent-light); color: var(--accent); font-size: 10px; padding: 2px 8px; border-radius: 20px; }
+    .recurring-tag { font-size: 10px; font-weight: 600; background: var(--accent-light); color: var(--accent); border-radius: 20px; padding: 2px 8px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.03em; }
+    [data-theme="dark"] .badge-high   { background: #2d1515; color: #fc8181; }
+    [data-theme="dark"] .badge-medium { background: #2d1f0a; color: #fbbf24; }
+    [data-theme="dark"] .badge-low    { background: #0d2018; color: #4ade80; }
+
+    .task-meta { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
+    .meta-item { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 3px; }
+    .meta-item strong { color: var(--text); font-weight: 500; }
+
+    .feedback { font-size: 13px; line-height: 1.5; padding: 10px 14px; border-radius: 8px; margin-top: 4px; }
+    .feedback.over { background: var(--success-bg); color: var(--success); }
+    .feedback.under { background: var(--warn-bg); color: var(--warn); }
+    .feedback.accurate { background: var(--info-bg); color: var(--info); }
+
+    .update-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px; background: var(--bg); border-radius: 9px; margin-top: 6px; }
+    .update-form label { font-size: 12px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+    .update-form input { font-family: var(--sans); font-size: 14px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 7px 10px; outline: none; width: 100px; }
+    .update-form input:focus { border-color: var(--accent); }
+    .btn-done { background: var(--accent); color: #fff; font-family: var(--sans); font-size: 13px; font-weight: 500; border: none; border-radius: 7px; padding: 8px 16px; cursor: pointer; white-space: nowrap; }
+    .btn-done:hover { background: var(--accent-dark); }
+
+    /* Edit/Delete buttons */
+    .task-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .btn-edit { font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--accent); background: var(--accent-light); border: 1px solid rgba(106,45,89,0.2); border-radius: 6px; padding: 4px 12px; cursor: pointer; }
+    .btn-edit:hover { background: var(--accent); color: #fff; }
+    .btn-delete { font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--danger); background: transparent; border: 1px solid rgba(220,38,38,0.3); border-radius: 6px; padding: 4px 12px; cursor: pointer; }
+    .btn-delete:hover { background: var(--danger-bg); }
+
+    /* Inline edit form */
+    .edit-form { display: none; margin-top: 12px; padding: 14px; background: var(--bg); border-radius: 10px; border: 1px solid var(--border); }
+    .edit-form.open { display: block; }
+    .edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .edit-field { display: flex; flex-direction: column; gap: 4px; }
+    .edit-field label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+    .edit-field input, .edit-field select { font-family: var(--sans); font-size: 13px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; outline: none; width: 100%; }
+    .edit-field input:focus, .edit-field select:focus { border-color: var(--accent); }
+    .edit-actions { display: flex; gap: 8px; }
+    .btn-save { font-family: var(--sans); font-size: 13px; font-weight: 500; background: var(--accent); color: #fff; border: none; border-radius: 7px; padding: 8px 18px; cursor: pointer; }
+    .btn-cancel { font-family: var(--sans); font-size: 13px; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 7px; padding: 8px 14px; cursor: pointer; }
+
+    /* Mobile */
+    @media (max-width: 660px) {
+      .page { grid-template-columns: 1fr; padding: 16px 12px 60px; }
+      .sidebar { position: static; }
+      .focus-strip { gap: 16px; padding: 12px 16px; flex-wrap: wrap; }
+      .focus-divider { display: none; }
+      .greeting-bar { padding: 18px 16px; }
+      nav { padding: 0 16px; }
+      .nav-links a { padding: 6px 10px; font-size: 13px; }
+      .edit-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Shader background */
+    #shader-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.35;
+    }
+    [data-theme="dark"] #shader-canvas { opacity: 0.5; }
+    body { background: #0a0510 !important; }
+    [data-theme="dark"] body { background: #0a0510 !important; }
+    nav { background: rgba(15,5,25,0.85) !important; backdrop-filter: blur(12px); border-bottom: 1px solid rgba(120,60,180,0.3) !important; }
+    .nav-brand { color: #d4a8ff !important; }
+    .nav-links a { color: #a78bba !important; }
+    .nav-links a.active { background: rgba(120,60,180,0.25) !important; color: #d4a8ff !important; }
+    .nav-links a:hover { background: rgba(120,60,180,0.15) !important; color: #fff !important; }
+    .theme-btn { color: #a78bba !important; border-color: rgba(120,60,180,0.3) !important; background: rgba(15,5,25,0.5) !important; }
+    .card { background: rgba(20,8,35,0.82) !important; border-color: rgba(120,60,180,0.25) !important; backdrop-filter: blur(10px); }
+    .stat-card { background: rgba(20,8,35,0.82) !important; border-color: rgba(120,60,180,0.25) !important; backdrop-filter: blur(10px); }
+    .greeting-bar, .page-header { background: linear-gradient(135deg, rgba(40,10,70,0.95), rgba(80,20,120,0.95)) !important; }
+    .page-header h1, .page-header p { background: transparent !important; }
+    .stats-bar, .focus-strip, .progress-wrap, .period-bar { background: rgba(15,5,25,0.85) !important; border-color: rgba(120,60,180,0.2) !important; backdrop-filter: blur(8px); }
+    .text, body, .task-name, .card-title, h1, h2, h3, .stat-card .num { color: #e8d5ff !important; }
+    .muted, .meta-item, .stat-card .label, .stat-card .sub { color: #9b7db8 !important; }
+    nav, .greeting-bar, .page-header, .focus-strip, .stats-bar, .progress-wrap,
+    .period-bar, .layout, .page, .stats-grid, .two-col, .card, .predict-card,
+    .sidebar, .period-tab, .banner, .stat-card, .plan-preview,
+    .task-card, .hist-item, .add-item, .plan-row, .field, .tabs, main, aside { position: relative; z-index: 1; }
+
+  </style>
+</head>
+<body>
+<canvas id="shader-canvas"></canvas>
+
+
+<nav>
+  <a class="nav-brand" href="/">Study Optimizer</a>
+  <div class="nav-links">
+    <a href="/profile">Profile</a>
+    <a href="/tasks" class="active">Tasks</a>
+    <a href="/plan">Plan My Day</a>
+    <a href="/performance">Performance</a>
+    <a href="/summary">Summary</a>
+    <a href="/logout" class="danger" onclick="return confirm('Are you sure you want to logout?')">Logout</a>
+  </div>
+</nav>
+
+<div class="greeting-bar">
+  <div class="greeting-text">
+    <h2>{{ greeting }}</h2>
+    <p>{% if pending | length == 0 %}All caught up — nothing pending.{% else %}You have {{ pending | length }} pending task{{ 's' if pending | length != 1 else '' }} to work through.{% endif %}</p>
+  </div>
+  <a href="/plan" class="plan-btn">Plan My Day</a>
+</div>
+
+<div class="focus-strip">
+  <div><div class="focus-label">Pending</div><div class="focus-stat">{{ pending | length }}</div><div class="focus-sub">tasks remaining</div></div>
+  <div class="focus-divider"></div>
+  <div><div class="focus-label">Completed</div><div class="focus-stat">{{ completed | length }}</div><div class="focus-sub">tasks done</div></div>
+  <div class="focus-divider"></div>
+  <div><div class="focus-label">Total</div><div class="focus-stat">{{ tasks | length }}</div><div class="focus-sub">tasks overall</div></div>
+  {% if today_plan | length > 0 %}
+  <div class="focus-divider"></div>
+  <div>
+    <div class="focus-label">Today's Plan</div>
+    <div class="focus-stat">{{ today_plan | selectattr('done', 'equalto', 1) | list | length }}/{{ today_plan | length }}</div>
+    <div class="focus-sub">planned done</div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="page">
+  <aside class="sidebar">
+    <div class="card">
+      <h2 class="card-title">Add a task</h2>
+      <form method="POST" action="/tasks">
+        <div class="field"><label>Task name</label><input type="text" name="task" placeholder="e.g. Chapter 5 revision" required></div>
+        <div class="field">
+          <label>Subject</label>
+          <select name="subject" required>
+            <option value="" disabled selected>Choose subject</option>
+            {% for subj in subjects %}<option value="{{ subj }}">{{ subj }}</option>{% endfor %}
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Task type</label>
+          <select name="type" required>
+            <option value="Exam">Exam prep</option>
+            <option value="Assignment">Assignment</option>
+            <option value="Project">Project</option>
+            <option value="Revision">Revision</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Priority</label>
+          <select name="priority">
+            <option value="High">High</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Recurring</label>
+          <select name="recurring" id="recurring-select" onchange="updatePreview()">
+            <option value="none" selected>No</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+          </select>
+        </div>
+        <div id="recurring-preview" style="display:none; margin-bottom:12px; padding:10px 12px; background:var(--accent-light); border-radius:8px; border:1px solid rgba(106,45,89,0.15);">
+          <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--accent); margin-bottom:6px;">Will be added to:</div>
+          <div id="preview-dates" style="font-size:12px; color:var(--accent-dark); line-height:1.8;"></div>
+        </div>
+        <div class="field"><label>Estimated time (hrs)</label><input type="number" name="estimated" step="0.25" min="0.25" placeholder="e.g. 2.5" required></div>
+        <button type="submit" class="btn-primary">+ Add Task</button>
+      </form>
+      <form method="POST" action="/clear" onsubmit="return confirm('Clear all tasks? Cannot be undone.')">
+        <button type="submit" class="btn-danger">Clear all tasks</button>
+      </form>
+    </div>
+
+    {% if today_plan | length > 0 %}
+    <div class="plan-preview">
+      <div class="plan-preview-title">Today's plan</div>
+      {% for item in today_plan %}
+        <div class="plan-item">
+          {% if item.done == 1 %}<span class="plan-done-dot"></span>{% else %}<span class="plan-todo-dot"></span>{% endif %}
+          <span>{{ item.task_name }}</span>
+        </div>
+      {% endfor %}
+      <a href="/plan" style="display:block; margin-top:10px; font-size:12px; color:var(--accent); text-decoration:none; font-weight:500;">View full plan</a>
+    </div>
+    {% endif %}
+
+    {% if recurring_tasks | length > 0 %}
+    <div class="card">
+      <h2 class="card-title" style="font-size:16px; margin-bottom:14px;">Recurring tasks</h2>
+      {% for task in recurring_tasks %}
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid var(--border);">
+          <div style="min-width:0;">
+            <div style="font-size:13px; font-weight:600; color:var(--text);">{{ task.Task }}</div>
+            <div style="font-size:11px; color:var(--muted); margin-top:2px;">
+              {{ task.Subject }} &middot; {{ task.Estimated }}h &middot;
+              <span style="color:var(--accent); font-weight:600;">{{ task.Recurring }}</span>
+            </div>
+            <div style="font-size:11px; color:var(--muted); margin-top:3px;">
+              {{ task.upcoming | join(', ') }}
+            </div>
+          </div>
+          <form method="POST" action="/remove_recurring/{{ task.id }}" onsubmit="return confirm('Remove this recurring task and all its future plan entries?')">
+            <button type="submit" style="font-family:var(--sans); font-size:12px; color:var(--danger); background:none; border:1px solid #fca5a5; border-radius:6px; padding:4px 10px; cursor:pointer; white-space:nowrap; flex-shrink:0;">Remove</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </aside>
+
+  <main>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('pending', this)">Pending ({{ pending | length }})</button>
+      <button class="tab-btn" onclick="switchTab('completed', this)">Completed ({{ completed | length }})</button>
+      <button class="tab-btn" onclick="switchTab('all', this)">All tasks</button>
+    </div>
+
+    <div id="tab-pending" class="tab-content active">
+      {% if pending | length == 0 %}
+        <div class="empty"><p>No pending tasks. Add one or you are all done.</p></div>
+      {% else %}
+        {% for task in pending %}
+          <div class="task-card pending">
+            <div class="task-top">
+              <div class="task-name">
+                {{ task.Task }}
+                {% if task.Recurring and task.Recurring != 'none' %}
+                  <span class="recurring-tag">{{ task.Recurring }}</span>
+                {% endif %}
+              </div>
+              <span class="badge badge-{{ task.Priority | lower }}">{{ task.Priority }}</span>
+            </div>
+            <div class="task-meta">
+              <div class="meta-item"><strong>{{ task.Subject }}</strong></div>
+              <div class="meta-item">{{ task.Type }}</div>
+              <div class="meta-item">Est: <strong>{{ task.Estimated }} hrs</strong></div>
+            </div>
+
+            {% if task.Recurring and task.Recurring != 'none' %}
+              {% set ns = namespace(entries=[]) %}
+              {% for rt in recurring_tasks %}
+                {% if rt.id == task.id %}
+                  {% set ns.entries = rt.plan_entries %}
+                {% endif %}
+              {% endfor %}
+              {% if ns.entries %}
+                <div style="margin-top:10px; border-top:1px solid var(--border); padding-top:10px;">
+                  {% for entry in ns.entries %}
+                    <div style="display:flex; align-items:center; gap:12px; padding:7px 0; border-bottom:1px solid var(--border); flex-wrap:wrap;">
+                      <span style="font-size:12px; font-weight:600; color:var(--accent-dark); min-width:64px;">
+                        {{ entry.date[8:10] }}
+                        {% set m = entry.date[5:7]|int %}
+                        {% set months = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] %}
+                        {{ months[m] }}
+                      </span>
+                      {% if entry.done == 1 %}
+                        <span style="font-size:12px; color:var(--success); font-weight:500;">Done — {{ entry.actual }}h actual</span>
+                      {% else %}
+                        <form class="update-form" method="POST" action="/update_plan_entry/{{ entry.id }}" style="flex:1; margin:0; padding:0; background:none;">
+                          <label>Actual time:</label>
+                          <input type="number" name="actual" step="0.25" min="0" placeholder="hrs" required>
+                          <button type="submit" class="btn-done">Mark done</button>
+                        </form>
+                      {% endif %}
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <p style="font-size:12px; color:var(--muted); margin-top:8px;">No plan entries yet — visit Plan My Day to see them.</p>
+              {% endif %}
+            {% else %}
+              <form class="update-form" method="POST" action="/update/{{ task.id }}">
+                <label>Actual time taken:</label>
+                <input type="number" name="actual" step="0.25" min="0" placeholder="hrs" required>
+                <button type="submit" class="btn-done">Mark done</button>
+              </form>
+            {% endif %}
+
+            <div class="task-actions">
+              <button class="btn-edit" onclick="toggleEdit('edit-{{ task.id }}')">Edit</button>
+              <form method="POST" action="/delete_task/{{ task.id }}" style="display:inline;" onsubmit="return confirm('Delete this task and remove it from all plans?')">
+                <button type="submit" class="btn-delete">Delete</button>
+              </form>
+            </div>
+
+            <div class="edit-form" id="edit-{{ task.id }}">
+              <form method="POST" action="/edit_task/{{ task.id }}">
+                <div class="edit-grid">
+                  <div class="edit-field" style="grid-column:1/-1;">
+                    <label>Task name</label>
+                    <input type="text" name="task" value="{{ task.Task }}" required>
+                  </div>
+                  <div class="edit-field">
+                    <label>Subject</label>
+                    <select name="subject">
+                      {% for subj in subjects %}<option value="{{ subj }}" {{ 'selected' if subj == task.Subject else '' }}>{{ subj }}</option>{% endfor %}
+                      <option value="Other" {{ 'selected' if task.Subject == 'Other' else '' }}>Other</option>
+                    </select>
+                  </div>
+                  <div class="edit-field">
+                    <label>Type</label>
+                    <select name="type">
+                      {% for t in ['Exam','Assignment','Project','Revision','Other'] %}
+                        <option value="{{ t }}" {{ 'selected' if t == task.Type else '' }}>{{ t }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="edit-field">
+                    <label>Estimated (hrs)</label>
+                    <input type="number" name="estimated" step="0.25" min="0.25" value="{{ task.Estimated }}" required>
+                  </div>
+                  <div class="edit-field">
+                    <label>Priority</label>
+                    <select name="priority">
+                      {% for p in ['High','Medium','Low'] %}
+                        <option value="{{ p }}" {{ 'selected' if p == task.Priority else '' }}>{{ p }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+                <div class="edit-actions">
+                  <button type="submit" class="btn-save">Save</button>
+                  <button type="button" class="btn-cancel" onclick="toggleEdit('edit-{{ task.id }}')">Cancel</button>
+                </div>
+              </form>
+            </div>
+
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    <div id="tab-completed" class="tab-content">
+      {% if completed | length == 0 %}
+        <div class="empty"><p>Nothing completed yet.</p></div>
+      {% else %}
+        {% for task in completed %}
+          <div class="task-card complete">
+            <div class="task-top">
+              <div class="task-name">{{ task.Task }}</div>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <span class="badge badge-{{ task.Priority | lower }}">{{ task.Priority }}</span>
+                <span class="badge badge-done">Done</span>
+              </div>
+            </div>
+            <div class="task-meta">
+              <div class="meta-item"><strong>{{ task.Subject }}</strong></div>
+              <div class="meta-item">{{ task.Type }}</div>
+              <div class="meta-item">Est: <strong>{{ task.Estimated }} hrs</strong></div>
+              <div class="meta-item">Actual: <strong>{{ task.Actual }} hrs</strong></div>
+            </div>
+            {% set diff = task.Actual | float - task.Estimated | float %}
+            {% if diff > 0.05 %}<div class="feedback under">{{ task.feedback }}</div>
+            {% elif diff < -0.05 %}<div class="feedback over">{{ task.feedback }}</div>
+            {% else %}<div class="feedback accurate">{{ task.feedback }}</div>{% endif %}
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    <div id="tab-all" class="tab-content">
+      {% if tasks | length == 0 %}
+        <div class="empty"><p>No tasks yet.</p></div>
+      {% else %}
+        {% for task in tasks %}
+          <div class="task-card {{ 'complete' if task.is_complete else 'pending' }}">
+            <div class="task-top">
+              <div class="task-name">
+                {{ task.Task }}
+                {% if task.Recurring != 'none' %}<span class="recurring-tag">{{ task.Recurring }}</span>{% endif %}
+              </div>
+              <span class="badge badge-{{ task.Priority | lower }}">{{ task.Priority }}</span>
+            </div>
+            <div class="task-meta">
+              <div class="meta-item"><strong>{{ task.Subject }}</strong></div>
+              <div class="meta-item">{{ task.Type }}</div>
+              <div class="meta-item">Est: <strong>{{ task.Estimated }} hrs</strong></div>
+              {% if task.is_complete %}<div class="meta-item">Actual: <strong>{{ task.Actual }} hrs</strong></div>{% endif %}
+            </div>
+            {% if task.is_complete %}
+              {% set diff = task.Actual | float - task.Estimated | float %}
+              {% if diff > 0.05 %}<div class="feedback under">{{ task.feedback }}</div>
+              {% elif diff < -0.05 %}<div class="feedback over">{{ task.feedback }}</div>
+              {% else %}<div class="feedback accurate">{{ task.feedback }}</div>{% endif %}
+            {% else %}
+              <form class="update-form" method="POST" action="/update/{{ task.id }}">
+                <label>Actual time taken:</label>
+                <input type="number" name="actual" step="0.25" min="0" placeholder="hrs" required>
+                <button type="submit" class="btn-done">Mark done</button>
+              </form>
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </main>
+</div>
+
+<script>
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function toggleEdit(id) {
+  const form = document.getElementById(id);
+  form.classList.toggle('open');
+}
+
+function updatePreview() {
+  const val = document.getElementById('recurring-select').value;
+  const preview = document.getElementById('recurring-preview');
+  const dates = document.getElementById('preview-dates');
+
+  if (val === 'none') {
+    preview.style.display = 'none';
+    return;
+  }
+
+  preview.style.display = 'block';
+  const today = new Date();
+  let list = [];
+
+  if (val === 'daily') {
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      list.push(d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }));
+    }
+    dates.textContent = list.join(', ');
+  } else if (val === 'weekly') {
+    const d = new Date(today);
+    d.setDate(today.getDate() + 7);
+    dates.textContent = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+  }
+}
+
+</script>
+
+
+
+
+
+<script>
+(function() {
+  const canvas = document.getElementById('shader-canvas');
+  if (!canvas) return;
+  const gl = canvas.getContext('webgl');
+  if (!gl) return;
+
+  const vsSource = `
+    attribute vec4 aVertexPosition;
+    void main() { gl_Position = aVertexPosition; }
+  `;
+
+  const fsSource = `
+    precision highp float;
+    uniform vec2 iResolution;
+    uniform float iTime;
+
+    const float overallSpeed = 0.1;
+    const float gridSmoothWidth = 0.015;
+    const float axisWidth = 0.05;
+    const float majorLineWidth = 0.025;
+    const float minorLineWidth = 0.0125;
+    const float majorLineFrequency = 5.0;
+    const float minorLineFrequency = 1.0;
+    const float scale = 5.0;
+    const vec4 lineColor = vec4(0.6, 0.3, 1.0, 1.0);
+    const float minLineWidth = 0.02;
+    const float maxLineWidth = 0.25;
+    const float lineSpeed = 1.0 * overallSpeed;
+    const float lineAmplitude = 1.0;
+    const float lineFrequency = 0.2;
+    const float warpSpeed = 0.2 * overallSpeed;
+    const float warpFrequency = 0.5;
+    const float warpAmplitude = 1.0;
+    const float offsetFrequency = 0.5;
+    const float offsetSpeed = 1.33 * overallSpeed;
+    const float minOffsetSpread = 0.6;
+    const float maxOffsetSpread = 2.0;
+    const int linesPerGroup = 16;
+
+    #define drawCircle(pos, radius, coord) smoothstep(radius + gridSmoothWidth, radius, length(coord - (pos)))
+    #define drawSmoothLine(pos, halfWidth, t) smoothstep(halfWidth, 0.0, abs(pos - (t)))
+    #define drawCrispLine(pos, halfWidth, t) smoothstep(halfWidth + gridSmoothWidth, halfWidth, abs(pos - (t)))
+
+    float random(float t) {
+      return (cos(t) + cos(t * 1.3 + 1.3) + cos(t * 1.4 + 1.4)) / 3.0;
+    }
+
+    float getPlasmaY(float x, float horizontalFade, float offset) {
+      return random(x * lineFrequency + iTime * lineSpeed) * horizontalFade * lineAmplitude + offset;
+    }
+
+    void main() {
+      vec2 center = iResolution.xy * 0.5;
+      vec2 uv = gl_FragCoord.xy / iResolution.xy;
+      vec2 space = (gl_FragCoord.xy - center) / iResolution.x * 2.0 * scale;
+
+      float horizontalFade = 1.0 - (cos(uv.x * 6.28) * 0.5 + 0.5);
+      float verticalFade = 1.0 - (cos(uv.y * 6.28) * 0.5 + 0.5);
+
+      space.y += random(space.x * warpFrequency + iTime * warpSpeed) * warpAmplitude * (0.5 + horizontalFade);
+      space.x += random(space.y * warpFrequency + iTime * warpSpeed + 2.0) * warpAmplitude * horizontalFade;
+
+      vec4 lines = vec4(0.0);
+      vec4 bgColor1 = vec4(0.04, 0.01, 0.12, 1.0);
+      vec4 bgColor2 = vec4(0.10, 0.02, 0.18, 1.0);
+
+      for(int l = 0; l < 16; l++) {
+        float normalizedLineIndex = float(l) / float(linesPerGroup);
+        float offsetTime = iTime * offsetSpeed;
+        float offsetPosition = float(l) + space.x * offsetFrequency;
+        float rand = random(offsetPosition + offsetTime) * 0.5 + 0.5;
+        float halfWidth = mix(minLineWidth, maxLineWidth, rand * horizontalFade) / 2.0;
+        float offset = random(offsetPosition + offsetTime * (1.0 + normalizedLineIndex)) * mix(minOffsetSpread, maxOffsetSpread, horizontalFade);
+        float linePosition = getPlasmaY(space.x, horizontalFade, offset);
+        float line = drawSmoothLine(linePosition, halfWidth, space.y) / 2.0 + drawCrispLine(linePosition, halfWidth * 0.15, space.y);
+
+        float circleX = mod(float(l) + iTime * lineSpeed, 25.0) - 12.0;
+        vec2 circlePosition = vec2(circleX, getPlasmaY(circleX, horizontalFade, offset));
+        float circle = drawCircle(circlePosition, 0.01, space) * 4.0;
+
+        line = line + circle;
+        lines += line * lineColor * rand;
+      }
+
+      vec4 fragColor = mix(bgColor1, bgColor2, uv.x + uv.y * 0.3);
+      fragColor *= verticalFade * 1.4;
+      fragColor.a = 1.0;
+      fragColor += lines * 1.3;
+      gl_FragColor = fragColor;
+    }
+  `;
+
+  function loadShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      console.error('Shader error:', gl.getShaderInfoLog(shader));
+      gl.deleteShader(shader); return null;
+    }
+    return shader;
+  }
+
+  const vs = loadShader(gl, gl.VERTEX_SHADER, vsSource);
+  const fs = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+  const program = gl.createProgram();
+  gl.attachShader(program, vs);
+  gl.attachShader(program, fs);
+  gl.linkProgram(program);
+
+  const positionBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+
+  const vertexPosition = gl.getAttribLocation(program, 'aVertexPosition');
+  const uResolution = gl.getUniformLocation(program, 'iResolution');
+  const uTime = gl.getUniformLocation(program, 'iTime');
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  const startTime = Date.now();
+  function render() {
+    const t = (Date.now() - startTime) / 1000;
+    gl.clearColor(0,0,0,1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(program);
+    gl.uniform2f(uResolution, canvas.width, canvas.height);
+    gl.uniform1f(uTime, t);
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.vertexAttribPointer(vertexPosition, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vertexPosition);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+})();
+</script>
+
+
+</body>
+</html>

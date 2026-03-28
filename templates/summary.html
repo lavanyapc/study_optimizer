@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Optimizer — Summary</title>
+  <script>document.documentElement.setAttribute('data-theme', 'dark');</script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f4f1ec; --surface: #fff; --accent: #6a2d59;
+      --accent-light: #f3e8f0; --accent-dark: #431b41;
+      --text: #1a1a1a; --muted: #6b7280; --border: #e5e0d8;
+      --success: #16a34a; --success-bg: #f0fdf4;
+      --warn: #d97706; --warn-bg: #fffbeb;
+      --danger: #dc2626; --danger-bg: #fef2f2;
+      --serif: 'DM Serif Display', Georgia, serif;
+      --sans: 'DM Sans', sans-serif;
+    }
+    [data-theme="dark"] {
+      --bg: #0f1117; --surface: #161b22; --border: #30363d;
+      --text: #e6edf3; --muted: #8b949e;
+      --accent-light: #2d1f3d; --accent-dark: #c084fc;
+      --success-bg: #0d2018; --warn-bg: #2d1f0a; --danger-bg: #2d1515;
+    }
+    body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+    nav { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; height: 60px; }
+    .nav-brand { font-family: var(--serif); font-size: 20px; color: var(--accent-dark); text-decoration: none; }
+    .nav-links { display: flex; gap: 4px; align-items: center; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: var(--muted); text-decoration: none; padding: 6px 16px; border-radius: 8px; transition: background 0.15s, color 0.15s; }
+    .nav-links a:hover { background: var(--bg); color: var(--text); }
+    .nav-links a.active { background: var(--accent-light); color: var(--accent-dark); }
+    .nav-links a.danger { color: var(--danger); }
+    .theme-btn { font-family: var(--sans); font-size: 13px; font-weight: 500; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 8px; padding: 5px 14px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+    .theme-btn:hover { color: var(--text); border-color: var(--accent); }
+
+    .page-header { background: linear-gradient(135deg, var(--accent-dark), var(--accent)); padding: 28px 32px; color: #fff; }
+    .page-header h1 { font-family: var(--serif); font-size: 28px; font-weight: 400; margin-bottom: 4px; }
+    .page-header p { font-size: 13px; opacity: 0.75; }
+
+    /* Period tabs */
+    .period-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; display: flex; gap: 0; }
+    .period-tab { font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none; padding: 14px 20px; border-bottom: 2px solid transparent; transition: all 0.15s; }
+    .period-tab:hover { color: var(--text); }
+    .period-tab.active { color: var(--accent-dark); border-bottom-color: var(--accent); }
+
+    .page { max-width: 1000px; margin: 0 auto; padding: 32px 24px 80px; }
+
+    /* Stats grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+    .stat-card .num { font-family: var(--serif); font-size: 30px; color: var(--accent-dark); line-height: 1; margin-bottom: 4px; }
+    .stat-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .stat-card .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .stat-card.highlight { background: var(--accent-light); border-color: rgba(106,45,89,0.2); }
+    .stat-card.highlight .num { color: var(--accent); }
+
+    /* Two column layout */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+    .card-title { font-family: var(--serif); font-size: 18px; color: var(--accent-dark); margin-bottom: 20px; }
+
+    /* Pie chart */
+    .pie-wrap { position: relative; height: 220px; display: flex; align-items: center; justify-content: center; }
+
+    /* Subject legend */
+    .legend { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 10px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .legend-label { font-size: 13px; color: var(--text); flex: 1; }
+    .legend-val { font-size: 13px; font-weight: 600; color: var(--accent-dark); }
+    .legend-pct { font-size: 11px; color: var(--muted); min-width: 36px; text-align: right; }
+
+    /* Bar chart */
+    .bar-wrap { position: relative; height: 180px; }
+
+    /* Best/worst day */
+    .day-highlight { display: flex; gap: 16px; }
+    .day-card { flex: 1; border-radius: 10px; padding: 16px; }
+    .day-card.best { background: var(--success-bg); border: 1px solid #bbf7d0; }
+    .day-card.worst { background: var(--warn-bg); border: 1px solid #fde68a; }
+    .day-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .day-card.best .day-label { color: var(--success); }
+    .day-card.worst .day-label { color: var(--warn); }
+    .day-date { font-family: var(--serif); font-size: 18px; color: var(--text); margin-bottom: 4px; }
+    .day-sub { font-size: 12px; color: var(--muted); }
+
+    /* Weekly table */
+    .week-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .week-table th { text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); padding: 0 12px 10px 0; }
+    .week-table td { padding: 10px 12px 10px 0; border-bottom: 1px solid var(--border); color: var(--text); }
+    .week-table tr:last-child td { border-bottom: none; }
+    .rate-pill { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 20px; }
+    .rate-high { background: var(--success-bg); color: var(--success); }
+    .rate-low { background: var(--warn-bg); color: var(--warn); }
+
+    /* Empty state */
+    .empty { text-align: center; padding: 60px 24px; color: var(--muted); }
+    .empty p { font-size: 15px; line-height: 1.7; }
+
+    @media (max-width: 700px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .two-col { grid-template-columns: 1fr; }
+    }
+
+    /* Shader background */
+    #shader-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.35;
+    }
+    [data-theme="dark"] #shader-canvas { opacity: 0.5; }
+    body { background: #0a0510 !important; }
+    [data-theme="dark"] body { background: #0a0510 !important; }
+    nav { background: rgba(15,5,25,0.85) !important; backdrop-filter: blur(12px); border-bottom: 1px solid rgba(120,60,180,0.3) !important; }
+    .nav-brand { color: #d4a8ff !important; }
+    .nav-links a { color: #a78bba !important; }
+    .nav-links a.active { background: rgba(120,60,180,0.25) !important; color: #d4a8ff !important; }
+    .nav-links a:hover { background: rgba(120,60,180,0.15) !important; color: #fff !important; }
+    .theme-btn { color: #a78bba !important; border-color: rgba(120,60,180,0.3) !important; background: rgba(15,5,25,0.5) !important; }
+    .card { background: rgba(20,8,35,0.82) !important; border-color: rgba(120,60,180,0.25) !important; backdrop-filter: blur(10px); }
+    .stat-card { background: rgba(20,8,35,0.82) !important; border-color: rgba(120,60,180,0.25) !important; backdrop-filter: blur(10px); }
+    .greeting-bar, .page-header { background: linear-gradient(135deg, rgba(40,10,70,0.95), rgba(80,20,120,0.95)) !important; }
+    .page-header h1, .page-header p { background: transparent !important; }
+    .stats-bar, .focus-strip, .progress-wrap, .period-bar { background: rgba(15,5,25,0.85) !important; border-color: rgba(120,60,180,0.2) !important; backdrop-filter: blur(8px); }
+    .text, body, .task-name, .card-title, h1, h2, h3, .stat-card .num { color: #e8d5ff !important; }
+    .muted, .meta-item, .stat-card .label, .stat-card .sub { color: #9b7db8 !important; }
+    nav, .greeting-bar, .page-header, .focus-strip, .stats-bar, .progress-wrap,
+    .period-bar, .layout, .page, .stats-grid, .two-col, .card, .predict-card,
+    .sidebar, .period-tab, .banner, .stat-card, .plan-preview,
+    .task-card, .hist-item, .add-item, .plan-row, .field, .tabs, main, aside { position: relative; z-index: 1; }
+
+  </style>
+</head>
+<body>
+<canvas id="shader-canvas"></canvas>
+
+
+<nav>
+  <a class="nav-brand" href="/">Study Optimizer</a>
+  <div class="nav-links">
+    <a href="/profile">Profile</a>
+    <a href="/tasks">Tasks</a>
+    <a href="/plan">Plan My Day</a>
+    <a href="/performance">Performance</a>
+    <a href="/summary" class="active">Summary</a>
+    <a href="/logout" class="danger" onclick="return confirm('Are you sure you want to logout?')">Logout</a>
+  </div>
+</nav>
+
+<div class="page-header">
+  <h1>Summary Report</h1>
+  <p>{{ greeting }} — here is how your study time breaks down.</p>
+</div>
+
+<!-- Period selector -->
+<div class="period-bar">
+  <a href="/summary?period=week" class="period-tab {{ 'active' if period == 'week' else '' }}">Last 7 days</a>
+  <a href="/summary?period=month" class="period-tab {{ 'active' if period == 'month' else '' }}">Last 30 days</a>
+  <a href="/summary?period=alltime" class="period-tab {{ 'active' if period == 'alltime' else '' }}">All time</a>
+</div>
+
+<div class="page">
+
+  {% if period_tasks_total == 0 and total_actual == 0 %}
+    <div class="empty">
+      <p>No study data yet for this period.<br>Start adding tasks and planning your days to see your summary here.</p>
+    </div>
+
+  {% else %}
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card highlight">
+      <div class="num">{{ total_actual }}h</div>
+      <div class="label">Hours studied</div>
+      <div class="sub">actual time logged</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">{{ period_rate }}%</div>
+      <div class="label">Completion rate</div>
+      <div class="sub">{{ period_tasks_done }}/{{ period_tasks_total }} tasks done</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">{{ period_hrs }}h</div>
+      <div class="label">Hours planned</div>
+      <div class="sub">{{ period_label }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">{{ subject_hours | length }}</div>
+      <div class="label">Subjects studied</div>
+      <div class="sub">across all tasks</div>
+    </div>
+  </div>
+
+  <!-- Pie chart + bar chart -->
+  <div class="two-col">
+
+    <!-- Subject pie chart -->
+    <div class="card">
+      <h2 class="card-title">Time by subject</h2>
+      {% if subject_hours | length == 0 %}
+        <p style="font-size:13px; color:var(--muted);">No completed tasks with actual time logged yet.</p>
+      {% else %}
+        <div class="pie-wrap">
+          <canvas id="pieChart"></canvas>
+        </div>
+        <div class="legend" id="legend"></div>
+      {% endif %}
+    </div>
+
+    <!-- Daily hours bar chart -->
+    <div class="card">
+      <h2 class="card-title">Daily hours — {{ period_label }}</h2>
+      {% if bar_values | length == 0 %}
+        <p style="font-size:13px; color:var(--muted);">No plan data in this period yet.</p>
+      {% else %}
+        <div class="bar-wrap">
+          <canvas id="barChart"></canvas>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Best / worst day -->
+  {% if best_day or worst_day %}
+  <div class="card" style="margin-bottom:24px;">
+    <h2 class="card-title">Best and worst day</h2>
+    <div class="day-highlight">
+      {% if best_day %}
+      <div class="day-card best">
+        <div class="day-label">Best day</div>
+        <div class="day-date">{{ best_day.date }}</div>
+        <div class="day-sub">{{ best_day.done }}/{{ best_day.total }} tasks done &middot; {{ best_day.hrs }}h planned</div>
+      </div>
+      {% endif %}
+      {% if worst_day and worst_day.date != best_day.date %}
+      <div class="day-card worst">
+        <div class="day-label">Needs improvement</div>
+        <div class="day-date">{{ worst_day.date }}</div>
+        <div class="day-sub">{{ worst_day.done }}/{{ worst_day.total }} tasks done &middot; {{ worst_day.hrs }}h planned</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Weekly breakdown -->
+  {% if weekly | length > 0 %}
+  <div class="card">
+    <h2 class="card-title">Week by week</h2>
+    <table class="week-table">
+      <thead>
+        <tr>
+          <th>Week</th>
+          <th>Hours planned</th>
+          <th>Tasks done</th>
+          <th>Completion</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for w in weekly | reverse %}
+        <tr>
+          <td>{{ w.week }}</td>
+          <td>{{ w.hrs }}h</td>
+          <td>{{ w.done }}/{{ w.total }}</td>
+          <td>
+            <span class="rate-pill {{ 'rate-high' if w.rate >= 70 else 'rate-low' }}">{{ w.rate }}%</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% endif %}
+
+</div>
+
+<script>
+const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+const tickColor = isDark ? '#8b949e' : '#6b7280';
+
+const COLORS = [
+  '#6a2d59','#9d4edd','#c77dff','#e0aaff',
+  '#2d6a4f','#52b788','#95d5b2','#d8f3dc',
+  '#1d3557','#457b9d','#a8dadc','#e63946'
+];
+
+// Pie chart
+const pieLabels = {{ pie_labels | safe }};
+const pieValues = {{ pie_values | safe }};
+
+if (pieLabels.length > 0) {
+  const pieCtx = document.getElementById('pieChart').getContext('2d');
+  new Chart(pieCtx, {
+    type: 'doughnut',
+    data: {
+      labels: pieLabels,
+      datasets: [{
+        data: pieValues,
+        backgroundColor: COLORS.slice(0, pieLabels.length),
+        borderWidth: 2,
+        borderColor: isDark ? '#161b22' : '#ffffff',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.label}: ${ctx.raw}h`
+          }
+        }
+      }
+    }
+  });
+
+  // Custom legend
+  const legend = document.getElementById('legend');
+  const total = pieValues.reduce((a, b) => a + b, 0);
+  pieLabels.forEach((label, i) => {
+    const pct = total > 0 ? Math.round(pieValues[i] / total * 100) : 0;
+    legend.innerHTML += `
+      <div class="legend-item">
+        <div class="legend-dot" style="background:${COLORS[i]}"></div>
+        <span class="legend-label">${label}</span>
+        <span class="legend-val">${pieValues[i]}h</span>
+        <span class="legend-pct">${pct}%</span>
+      </div>`;
+  });
+}
+
+// Bar chart
+const barLabels = {{ bar_labels | safe }};
+const barValues = {{ bar_values | safe }};
+
+if (barLabels.length > 0) {
+  const barCtx = document.getElementById('barChart').getContext('2d');
+  new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: barLabels,
+      datasets: [{
+        label: 'Hours planned',
+        data: barValues,
+        backgroundColor: '#6a2d59',
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.raw}h planned` } }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { callback: v => v + 'h', font: { size: 11 }, color: tickColor },
+          grid: { color: gridColor }
+        },
+        x: {
+          ticks: { font: { size: 10 }, color: tickColor, maxRotation: 45 },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+// Dark mode toggle
+</script>
+
+
+
+
+
+<script>
+(function() {
+  const canvas = document.getElementById('shader-canvas');
+  if (!canvas) return;
+  const gl = canvas.getContext('webgl');
+  if (!gl) return;
+
+  const vsSource = `
+    attribute vec4 aVertexPosition;
+    void main() { gl_Position = aVertexPosition; }
+  `;
+
+  const fsSource = `
+    precision highp float;
+    uniform vec2 iResolution;
+    uniform float iTime;
+
+    const float overallSpeed = 0.1;
+    const float gridSmoothWidth = 0.015;
+    const float axisWidth = 0.05;
+    const float majorLineWidth = 0.025;
+    const float minorLineWidth = 0.0125;
+    const float majorLineFrequency = 5.0;
+    const float minorLineFrequency = 1.0;
+    const float scale = 5.0;
+    const vec4 lineColor = vec4(0.6, 0.3, 1.0, 1.0);
+    const float minLineWidth = 0.02;
+    const float maxLineWidth = 0.25;
+    const float lineSpeed = 1.0 * overallSpeed;
+    const float lineAmplitude = 1.0;
+    const float lineFrequency = 0.2;
+    const float warpSpeed = 0.2 * overallSpeed;
+    const float warpFrequency = 0.5;
+    const float warpAmplitude = 1.0;
+    const float offsetFrequency = 0.5;
+    const float offsetSpeed = 1.33 * overallSpeed;
+    const float minOffsetSpread = 0.6;
+    const float maxOffsetSpread = 2.0;
+    const int linesPerGroup = 16;
+
+    #define drawCircle(pos, radius, coord) smoothstep(radius + gridSmoothWidth, radius, length(coord - (pos)))
+    #define drawSmoothLine(pos, halfWidth, t) smoothstep(halfWidth, 0.0, abs(pos - (t)))
+    #define drawCrispLine(pos, halfWidth, t) smoothstep(halfWidth + gridSmoothWidth, halfWidth, abs(pos - (t)))
+
+    float random(float t) {
+      return (cos(t) + cos(t * 1.3 + 1.3) + cos(t * 1.4 + 1.4)) / 3.0;
+    }
+
+    float getPlasmaY(float x, float horizontalFade, float offset) {
+      return random(x * lineFrequency + iTime * lineSpeed) * horizontalFade * lineAmplitude + offset;
+    }
+
+    void main() {
+      vec2 center = iResolution.xy * 0.5;
+      vec2 uv = gl_FragCoord.xy / iResolution.xy;
+      vec2 space = (gl_FragCoord.xy - center) / iResolution.x * 2.0 * scale;
+
+      float horizontalFade = 1.0 - (cos(uv.x * 6.28) * 0.5 + 0.5);
+      float verticalFade = 1.0 - (cos(uv.y * 6.28) * 0.5 + 0.5);
+
+      space.y += random(space.x * warpFrequency + iTime * warpSpeed) * warpAmplitude * (0.5 + horizontalFade);
+      space.x += random(space.y * warpFrequency + iTime * warpSpeed + 2.0) * warpAmplitude * horizontalFade;
+
+      vec4 lines = vec4(0.0);
+      vec4 bgColor1 = vec4(0.04, 0.01, 0.12, 1.0);
+      vec4 bgColor2 = vec4(0.10, 0.02, 0.18, 1.0);
+
+      for(int l = 0; l < 16; l++) {
+        float normalizedLineIndex = float(l) / float(linesPerGroup);
+        float offsetTime = iTime * offsetSpeed;
+        float offsetPosition = float(l) + space.x * offsetFrequency;
+        float rand = random(offsetPosition + offsetTime) * 0.5 + 0.5;
+        float halfWidth = mix(minLineWidth, maxLineWidth, rand * horizontalFade) / 2.0;
+        float offset = random(offsetPosition + offsetTime * (1.0 + normalizedLineIndex)) * mix(minOffsetSpread, maxOffsetSpread, horizontalFade);
+        float linePosition = getPlasmaY(space.x, horizontalFade, offset);
+        float line = drawSmoothLine(linePosition, halfWidth, space.y) / 2.0 + drawCrispLine(linePosition, halfWidth * 0.15, space.y);
+
+        float circleX = mod(float(l) + iTime * lineSpeed, 25.0) - 12.0;
+        vec2 circlePosition = vec2(circleX, getPlasmaY(circleX, horizontalFade, offset));
+        float circle = drawCircle(circlePosition, 0.01, space) * 4.0;
+
+        line = line + circle;
+        lines += line * lineColor * rand;
+      }
+
+      vec4 fragColor = mix(bgColor1, bgColor2, uv.x + uv.y * 0.3);
+      fragColor *= verticalFade * 1.4;
+      fragColor.a = 1.0;
+      fragColor += lines * 1.3;
+      gl_FragColor = fragColor;
+    }
+  `;
+
+  function loadShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      console.error('Shader error:', gl.getShaderInfoLog(shader));
+      gl.deleteShader(shader); return null;
+    }
+    return shader;
+  }
+
+  const vs = loadShader(gl, gl.VERTEX_SHADER, vsSource);
+  const fs = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+  const program = gl.createProgram();
+  gl.attachShader(program, vs);
+  gl.attachShader(program, fs);
+  gl.linkProgram(program);
+
+  const positionBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+
+  const vertexPosition = gl.getAttribLocation(program, 'aVertexPosition');
+  const uResolution = gl.getUniformLocation(program, 'iResolution');
+  const uTime = gl.getUniformLocation(program, 'iTime');
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  const startTime = Date.now();
+  function render() {
+    const t = (Date.now() - startTime) / 1000;
+    gl.clearColor(0,0,0,1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(program);
+    gl.uniform2f(uResolution, canvas.width, canvas.height);
+    gl.uniform1f(uTime, t);
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.vertexAttribPointer(vertexPosition, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vertexPosition);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+})();
+</script>
+
+
+</body>
+</html>
